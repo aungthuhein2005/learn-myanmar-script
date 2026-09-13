@@ -1,6 +1,6 @@
 # Learn Myanmar Script
 
-A lightweight, browser-based Myanmar handwriting learning and recognition application. Learners can browse Myanmar characters, practise drawing them on a canvas, and take a short quiz.
+A lightweight, browser-based Myanmar handwriting learning and recognition application. Learners can browse Myanmar characters and practise drawing them on a canvas.
 
 Handwriting inference runs entirely in the browser with [ONNX Runtime Web](https://onnxruntime.ai/docs/tutorials/web/). The ONNX graph and its external weights are fetched from the public Hugging Face model repository, while the static frontend is deployed with GitHub Pages.
 

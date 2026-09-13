@@ -294,57 +294,6 @@
       transform: scale(1.2);
     }
 
-    .mw-quiz-option {
-      padding: 16px 24px;
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      background: var(--card-bg);
-      font-size: 32px;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: 'Noto Sans Myanmar', 'Padauk', sans-serif;
-      min-width: 80px;
-      text-align: center;
-    }
-
-    .mw-quiz-option:hover {
-      border-color: var(--primary);
-      transform: translateY(-2px);
-    }
-
-    .mw-quiz-option.correct {
-      border-color: var(--success);
-      background: #e8f5e9;
-    }
-
-    .mw-quiz-option.wrong {
-      border-color: var(--error);
-      background: #ffebee;
-    }
-
-    .mw-quiz-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-      max-width: 400px;
-      margin: 0 auto;
-    }
-
-    .mw-quiz-question {
-      font-size: 18px;
-      color: var(--text);
-      margin-bottom: 20px;
-      text-align: center;
-    }
-
-    .mw-quiz-target {
-      font-size: 64px;
-      color: var(--primary);
-      text-align: center;
-      margin-bottom: 24px;
-      font-family: 'Noto Sans Myanmar', 'Padauk', sans-serif;
-    }
-
     .mw-hidden { display: none !important; }
 
     .mw-stars {
@@ -376,7 +325,6 @@
     <div class="mw-nav">
       <button class="mw-nav-btn active" onclick="showTab('learn')">📚 သင်ခန်းစာ</button>
       <button class="mw-nav-btn" onclick="showTab('practice')">✏️ လေ့ကျင့်</button>
-      <button class="mw-nav-btn" onclick="showTab('quiz')">🎯 စာမေးပွဲ</button>
     </div>
 
     <!-- Learn Tab -->
@@ -419,22 +367,6 @@
       </div>
     </div>
 
-    <!-- Quiz Tab -->
-    <div id="tab-quiz" class="mw-tab mw-hidden">
-      <div class="mw-card">
-        <div class="mw-progress" id="quizProgress"></div>
-        <div class="mw-practice-area">
-          <div class="mw-quiz-question" id="quizQuestion">အောက်ပါအက္ခရာကို ရွေးချယ်ပါ</div>
-          <div class="mw-quiz-target" id="quizTarget">က</div>
-          <div class="mw-quiz-grid" id="quizOptions"></div>
-          <div class="mw-score" id="quizScore"></div>
-          <div class="mw-stars" id="quizStars"></div>
-          <div class="mw-controls" style="margin-top:20px">
-            <button class="mw-btn mw-btn-primary" onclick="nextQuiz()">➡️ နောက်တစ်ခု</button>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <script>
@@ -505,9 +437,6 @@
 
     let practiceIndex = 0;
     let practiceOrder = [];
-    let quizIndex = 0;
-    let quizScore = 0;
-    let quizTotal = 0;
     let isTracing = false;
     let canvas, ctx;
     let isDrawing = false;
@@ -615,7 +544,6 @@
       renderNumbers();
       initCanvas();
       initPractice();
-      initQuiz();
       initModel();
     }
 
@@ -664,7 +592,6 @@
       document.querySelectorAll('.mw-nav-btn').forEach(b => b.classList.remove('active'));
       event.target.classList.add('active');
       if (tab === 'practice') initPractice();
-      if (tab === 'quiz') initQuiz();
     }
 
     function initCanvas() {
@@ -808,90 +735,6 @@
     function nextPractice() {
       practiceIndex = (practiceIndex + 1) % practiceOrder.length;
       loadPracticeChar();
-    }
-
-    function initQuiz() {
-      quizIndex = 0;
-      quizScore = 0;
-      quizTotal = 0;
-      loadQuiz();
-    }
-
-    function loadQuiz() {
-      const correct = consonants[Math.floor(Math.random() * consonants.length)];
-      const wrong = [];
-      while (wrong.length < 3) {
-        const r = consonants[Math.floor(Math.random() * consonants.length)];
-        if (r.char !== correct.char && !wrong.find(w => w.char === r.char)) {
-          wrong.push(r);
-        }
-      }
-      const options = [correct, ...wrong].sort(() => Math.random() - 0.5);
-
-      const questionType = Math.random() > 0.5 ? 'sound' : 'name';
-      if (questionType === 'sound') {
-        document.getElementById('quizQuestion').textContent = `"${correct.roman}" အသံကို ရွေးချယ်ပါ`;
-        document.getElementById('quizTarget').textContent = '';
-      } else {
-        document.getElementById('quizQuestion').textContent = 'အောက်ပါအက္ခရာကို ရွေးချယ်ပါ';
-        document.getElementById('quizTarget').textContent = correct.char;
-      }
-
-      const optsEl = document.getElementById('quizOptions');
-      optsEl.innerHTML = options.map(opt => `
-        <div class="mw-quiz-option" onclick="answerQuiz(this, '${opt.char}', '${correct.char}')">
-          ${opt.char}
-        </div>
-      `).join('');
-
-      document.getElementById('quizScore').textContent = '';
-      document.getElementById('quizStars').textContent = '';
-      renderQuizProgress();
-    }
-
-    function renderQuizProgress() {
-      const total = 10;
-      let dots = '';
-      for (let i = 0; i < total; i++) {
-        let cls = 'mw-progress-dot';
-        if (i < quizTotal) cls += ' done';
-        else if (i === quizTotal) cls += ' current';
-        dots += `<div class="${cls}"></div>`;
-      }
-      document.getElementById('quizProgress').innerHTML = dots;
-    }
-
-    function answerQuiz(el, selected, correct) {
-      const allOpts = document.querySelectorAll('.mw-quiz-option');
-      allOpts.forEach(o => o.style.pointerEvents = 'none');
-      if (selected === correct) {
-        el.classList.add('correct');
-        quizScore++;
-        document.getElementById('quizScore').textContent = '✅ မှန်တယ်!';
-        document.getElementById('quizStars').textContent = '⭐';
-        playChar('မှန်တယ်', 'correct');
-      } else {
-        el.classList.add('wrong');
-        allOpts.forEach(o => {
-          if (o.textContent.trim() === correct) o.classList.add('correct');
-        });
-        document.getElementById('quizScore').textContent = '❌ မှားတယ်! အဖြေက ' + correct;
-      }
-      quizTotal++;
-      renderQuizProgress();
-    }
-
-    function nextQuiz() {
-      if (quizTotal >= 10) {
-        document.getElementById('quizQuestion').textContent = `🎉 စာမေးပွဲပြီးပါပြီ! ရမှတ်: ${quizScore}/10`;
-        document.getElementById('quizTarget').textContent = '';
-        document.getElementById('quizOptions').innerHTML = '';
-        document.getElementById('quizStars').textContent = '⭐'.repeat(Math.ceil(quizScore / 2));
-        quizTotal = 0;
-        quizScore = 0;
-        return;
-      }
-      loadQuiz();
     }
 
     init();
