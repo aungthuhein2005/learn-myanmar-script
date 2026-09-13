@@ -18,7 +18,7 @@ No build step or Python dependencies are required. From the repository root, sta
 python -m http.server 8000
 ```
 
-Then open <http://localhost:8000/>. An internet connection is required for the Google font, ONNX Runtime Web, and model files.
+Then open <http://localhost:8000/>. An internet connection is required for the Google font, ONNX Runtime Web, and model files
 
 ## Model hosting
 
