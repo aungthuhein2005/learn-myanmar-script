@@ -56,6 +56,17 @@
       font-size: 15px;
     }
 
+    .mw-model-error {
+      margin: 12px auto 0;
+      max-width: 620px;
+      padding: 10px 14px;
+      border: 1px solid var(--error);
+      border-radius: 10px;
+      background: #ffebee;
+      color: var(--error);
+      font-size: 14px;
+    }
+
     .mw-nav {
       display: flex;
       gap: 8px;
@@ -359,6 +370,7 @@
     <div class="mw-header">
       <h1>🎓 မြန်မာစာရေးနည်း</h1>
       <p>ကလေးတွေအတွက် မြန်မာစာလုံးရေးနည်းလေ့ကျင့်ရန်</p>
+      <p id="modelError" class="mw-model-error mw-hidden" role="alert">Unable to load the handwriting recognition model. Please check your internet connection and try again.</p>
     </div>
 
     <div class="mw-nav">
@@ -506,15 +518,25 @@
     let modelReady = false;
     let embeddingCache = {};
 
-    async function initModel() {
-      if (typeof ort === 'undefined') { console.warn('ONNX Runtime not loaded'); return; }
-      try {
-        const modelResp = await fetch('./model.onnx');
-        if (!modelResp.ok) throw new Error('fetch model.onnx: ' + modelResp.status);
-        const modelBuf = await modelResp.arrayBuffer();
+    const MODEL_URL = 'https://huggingface.co/aungthuhein-dev/myanmar-handwriting/resolve/main/model.onnx';
+    const MODEL_DATA_URL = 'https://huggingface.co/aungthuhein-dev/myanmar-handwriting/resolve/main/model.onnx.data';
 
-        const dataResp = await fetch('./model.onnx.data');
-        if (!dataResp.ok) throw new Error('fetch model.onnx.data: ' + dataResp.status);
+    async function initModel() {
+      const modelError = document.getElementById('modelError');
+      if (typeof ort === 'undefined') {
+        console.error('ONNX Runtime Web failed to load.');
+        modelError.classList.remove('mw-hidden');
+        return;
+      }
+      try {
+        const [modelResp, dataResp] = await Promise.all([
+          fetch(MODEL_URL),
+          fetch(MODEL_DATA_URL),
+        ]);
+        if (!modelResp.ok) throw new Error(`Model request failed with HTTP ${modelResp.status}`);
+        if (!dataResp.ok) throw new Error(`External model data request failed with HTTP ${dataResp.status}`);
+
+        const modelBuf = await modelResp.arrayBuffer();
         const dataBuf = await dataResp.arrayBuffer();
 
         modelSession = await ort.InferenceSession.create(
@@ -522,9 +544,11 @@
           { externalData: [{ data: new Uint8Array(dataBuf), path: 'model.onnx.data' }] }
         );
         modelReady = true;
+        modelError.classList.add('mw-hidden');
         console.log('Model loaded');
       } catch (e) {
         console.error('Model load failed:', e);
+        modelError.classList.remove('mw-hidden');
       }
     }
 

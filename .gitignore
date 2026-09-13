@@ -1,4 +1,9 @@
 .venv/
+venv/
 __pycache__/
 *.pyc
+model.onnx
+model.onnx.data
+.env
+.env.*
 .DS_Store
