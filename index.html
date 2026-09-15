@@ -435,6 +435,9 @@
       {char: '၉', roman: '9'},
     ];
 
+    const recordedChars = new Set(consonants.map(({ char }) => char));
+    let activeCharacterAudio = null;
+
     let practiceIndex = 0;
     let practiceOrder = [];
     let isTracing = false;
@@ -580,6 +583,36 @@
     }
 
     function playChar(char, roman) {
+      if (activeCharacterAudio) {
+        activeCharacterAudio.pause();
+        activeCharacterAudio.currentTime = 0;
+        activeCharacterAudio = null;
+      }
+
+      if (recordedChars.has(char)) {
+        const audio = new Audio(`voices/${encodeURIComponent(char)}.m4a`);
+        activeCharacterAudio = audio;
+        let fallbackStarted = false;
+
+        const useSpeechSynthesis = () => {
+          if (fallbackStarted) return;
+          fallbackStarted = true;
+          activeCharacterAudio = null;
+          speakWithBrowser(char);
+        };
+
+        audio.addEventListener('ended', () => {
+          if (activeCharacterAudio === audio) activeCharacterAudio = null;
+        }, { once: true });
+        audio.addEventListener('error', useSpeechSynthesis, { once: true });
+        audio.play().catch(useSpeechSynthesis);
+        return;
+      }
+
+      speakWithBrowser(char);
+    }
+
+    function speakWithBrowser(char) {
       const utterance = new SpeechSynthesisUtterance(char);
       utterance.lang = 'my-MM';
       utterance.rate = 0.8;
